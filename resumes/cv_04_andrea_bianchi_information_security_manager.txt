@@ -1,0 +1,75 @@
+ANDREA BIANCHI
+Information Security Manager
+
+CONTATTI
+Città: Roma, Italia
+Email: andrea.bianchi@email.com
+Telefono: +39 345 9876543
+LinkedIn: linkedin.com/in/andreabianchi
+
+PROFILO PROFESSIONALE
+Information Security Manager con 15 anni di esperienza nella progettazione, implementazione e gestione di soluzioni di sicurezza informatica in ambienti enterprise. Specializzato in cyber security, ethical hacking, incident response, digital forensics, vulnerability management e compliance. Ha gestito team di sicurezza, budget fino a 3 milioni di euro e programmi di protezione per infrastrutture critiche.
+
+ESPERIENZA PROFESSIONALE
+SecureBank S.p.A.
+Chief Information Security Officer, 2019 - Presente
+- Gestione di un team di sicurezza informatica composto da 15 persone.
+- Sviluppo e implementazione della strategia di sicurezza aziendale.
+- Riduzione del 75% degli incidenti di sicurezza critici.
+- Implementazione di un SOC interno per monitoraggio, detection e risposta agli incidenti.
+- Gestione di un budget annuale di 3 milioni di euro per progetti di sicurezza.
+- Coordinamento con funzioni IT, legal, risk management e audit.
+
+CyberDefense Italia
+Senior Security Engineer, 2015 - 2019
+- Coordinamento di attività di vulnerability assessment e penetration testing.
+- Implementazione di soluzioni SIEM e sistemi di threat intelligence.
+- Gestione della risposta agli incidenti di sicurezza.
+- Sviluppo di procedure di disaster recovery e business continuity.
+- Conduzione di audit di sicurezza ISO 27001.
+
+TechSecure Solutions
+System and Security Administrator, 2010 - 2015
+- Gestione dell'infrastruttura di rete e dei sistemi di sicurezza.
+- Implementazione e manutenzione di firewall e sistemi IDS/IPS.
+- Amministrazione di sistemi Linux e Windows Server.
+- Gestione delle policy di sicurezza e compliance.
+- Monitoraggio e risposta agli alert di sicurezza.
+
+COMPETENZE TECNICHE
+- Ethical hacking.
+- Penetration testing.
+- Incident response.
+- Digital forensics.
+- Network security.
+- Cloud security, AWS e Azure.
+- SIEM e SOC.
+- Cryptography.
+- Risk assessment.
+- Compliance, GDPR e ISO 27001.
+
+TECNOLOGIE E STRUMENTI
+Sistemi operativi: Linux, Red Hat, Ubuntu, Kali, Windows Server, Unix.
+Security tools: Nessus, Metasploit, Wireshark, Splunk, QRadar.
+Network security: Palo Alto, Cisco ASA.
+Altro: VMware, Docker, Python, Bash scripting.
+
+CERTIFICAZIONI
+- CISSP, Certified Information Systems Security Professional.
+- CEH, Certified Ethical Hacker.
+- CISM, Certified Information Security Manager.
+- CompTIA Security+.
+- AWS Certified Security Specialist.
+- CCNP Security.
+
+FORMAZIONE
+Master in Cyber Security
+Politecnico di Milano, 2010
+
+Laurea in Ingegneria Informatica
+Università di Roma La Sapienza, 2008
+
+LINGUE
+Italiano: Madrelingua
+Inglese: Fluente, C1
+Tedesco: Base, A2
