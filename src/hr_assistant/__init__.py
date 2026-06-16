@@ -13,6 +13,54 @@ from hr_assistant.utils import LLMHelper
 
 db = Database()
 
+ACCEPTED_UPLOAD_TYPES = {
+    "text/plain": [".txt"],
+    "application/pdf": [".pdf"],
+    "application/msword": [".doc"],
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+    "application/vnd.ms-powerpoint": [".ppt"],
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"],
+    "application/vnd.ms-excel": [".xls"],
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+    "text/html": [".html", ".htm"],
+    "text/csv": [".csv"],
+    "application/json": [".json"],
+    "application/xml": [".xml"],
+    "text/xml": [".xml"],
+    "application/zip": [".zip"],
+}
+
+def is_supported_upload(file_name: str) -> bool:
+    extension = Path(file_name).suffix.lower()
+    return extension in DocumentProcessor.SUPPORTED_EXTENSIONS
+
+
+def save_uploaded_file(uploaded_file) -> str:
+    os.makedirs(Config.DOCUMENTS_DIR, exist_ok=True)
+
+    safe_file_name = Path(uploaded_file.name).name
+    destination = Path(Config.DOCUMENTS_DIR) / safe_file_name
+
+    shutil.copyfile(uploaded_file.path, destination)
+
+    return safe_file_name
+
+
+async def save_uploaded_files(uploaded_files) -> list[str]:
+    saved_files = []
+
+    for uploaded_file in uploaded_files:
+        if not is_supported_upload(uploaded_file.name):
+            continue
+
+        saved_file_name = await asyncio.to_thread(
+            save_uploaded_file,
+            uploaded_file,
+        )
+
+        saved_files.append(saved_file_name)
+
+    return saved_files
 
 def format_sync_report(report):
     lines = [
@@ -94,11 +142,11 @@ def get_document_actions():
             tooltip="Mostra file e chunk indicizzati",
         ),
         cl.Action(
-            name="upload_resume",
-            label="Carica file",
+            name="upload_documents",
+            label="Carica documenti",
             icon="upload",
             payload={"value": "upload"},
-            tooltip="Carica CV o documenti nei formati supportati"
+            tooltip="Carica CV o documenti supportati",
         ),
         cl.Action(
             name="reset_index",
@@ -131,7 +179,7 @@ async def start():
             }
         ],
     )
-
+    os.makedirs(".files", exist_ok=True)
     os.makedirs(Config.DOCUMENTS_DIR, exist_ok=True)
 
     report = await asyncio.to_thread(
@@ -174,27 +222,13 @@ async def on_show_index_stats(action: cl.Action):
         content=format_index_stats(),
     ).send()
 
-@cl.action_callback("upload_resume")
-async def on_upload_resume(action: cl.Action):
+@cl.action_callback("upload_documents")
+async def on_upload_documents(action: cl.Action):
     files = await cl.AskFileMessage(
-        content="Carica uno o più CV o documenti nei formati supportati.",
-        accept={
-            "text/plain": [".txt"],
-            "application/pdf": [".pdf"],
-            "application/msword": [".doc"],
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
-            "application/vnd.ms-powerpoint": [".ppt"],
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"],
-            "application/vnd.ms-excel": [".xls"],
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
-            "text/html": [".html", ".htm"],
-            "text/csv": [".csv"],
-            "application/json": [".json"],
-            "application/xml": [".xml"],
-            "application/zip": [".zip"],
-        },
+        content="Carica uno o più documenti supportati.",
+        accept=ACCEPTED_UPLOAD_TYPES,
         max_files=10,
-        max_size_mb=5,
+        max_size_mb=20,
         timeout=180,
         raise_on_timeout=False,
     ).send()
@@ -203,16 +237,17 @@ async def on_upload_resume(action: cl.Action):
         await cl.Message(
             content="Nessun file caricato."
         ).send()
+        await send_document_actions()
         return
 
-    os.makedirs(Config.DOCUMENTS_DIR, exist_ok=True)
+    saved_files = await save_uploaded_files(files)
 
-    uploaded_names = []
-
-    for uploaded_file in files:
-        destination = Path(Config.DOCUMENTS_DIR) / Path(uploaded_file.name).name
-        shutil.copyfile(uploaded_file.path, destination)
-        uploaded_names.append(destination.name)
+    if not saved_files:
+        await cl.Message(
+            content="Nessun file supportato caricato."
+        ).send()
+        await send_document_actions()
+        return
 
     report = await asyncio.to_thread(
         DocumentProcessor.process_documents,
@@ -221,8 +256,8 @@ async def on_upload_resume(action: cl.Action):
 
     await cl.Message(
         content=(
-            "File caricati:\n"
-            + "\n".join(f"• {name}" for name in uploaded_names)
+            "File salvati nella cartella resumes:\n"
+            + "\n".join(f"• {file_name}" for file_name in saved_files)
             + "\n\n"
             + format_sync_report(report)
         )
@@ -282,6 +317,43 @@ async def on_reset_index(action: cl.Action):
 
 @cl.on_message
 async def handle_message(message: cl.Message):
+    if message.elements:
+        await cl.Message(
+            content="Caricamento e indicizzazione documenti..."
+        ).send()
+
+        supported_files = [
+            file
+            for file in message.elements
+            if is_supported_upload(file.name)
+        ]
+
+        if not supported_files:
+            await cl.Message(
+                content="Nessun file supportato trovato nel messaggio."
+            ).send()
+            await send_document_actions()
+            return
+
+        saved_files = await save_uploaded_files(supported_files)
+
+        report = await asyncio.to_thread(
+            DocumentProcessor.process_documents,
+            db,
+        )
+
+        await cl.Message(
+            content=(
+                "File salvati nella cartella resumes:\n"
+                + "\n".join(f"• {file_name}" for file_name in saved_files)
+                + "\n\n"
+                + format_sync_report(report)
+            )
+        ).send()
+
+        await send_document_actions()
+        return
+
     user_question = message.content
 
     if db.count() == 0:
