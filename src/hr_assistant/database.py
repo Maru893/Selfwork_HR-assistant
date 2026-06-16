@@ -39,15 +39,17 @@ class Database:
                 continue
 
             source = metadata.get("source")
-            file_hash = metadata.get("hash")
-            last_modified = metadata.get("last_modified")
 
             if source and source not in tracked_files:
                 tracked_files[source] = {
-                    "hash": file_hash,
-                    "last_modified": last_modified,
+                    "hash": metadata.get("hash"),
+                    "last_modified": metadata.get("last_modified"),
                     "source": source,
-                }
+                    "chunking_signature": metadata.get("chunking_signature"),
+                    "candidate_name": metadata.get("candidate_name"),
+                    "email": metadata.get("email"),
+                    "phone": metadata.get("phone"),
+            }
 
         return tracked_files
 

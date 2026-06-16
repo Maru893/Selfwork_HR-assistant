@@ -9,8 +9,13 @@ class Config:
     # Embedding (OpenAI)
     MODEL_NAME = "text-embedding-3-small"
     OPENAI_KEY = os.getenv("OPENAI_API_KEY")
+
+    # Chunking
+    CHUNKING_STRATEGY = "fixed"
+    CHUNK_SIZE = 800
+    CHUNK_OVERLAP = 150
+
     
-    # Completamento (Scegli tu quale de-commentare)
 
     ### Configurazione per Ollama locale (Llama 3.2)
     LLM_MODEL = "llama3.2"  
@@ -22,3 +27,5 @@ class Config:
     # LLM_MODEL = "gpt-4o-mini"
     # AI_API_URL = "https://openai.com/v1"
     # AI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+    

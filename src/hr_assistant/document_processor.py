@@ -1,5 +1,7 @@
 # document_processor.py
+
 import os
+import re
 import hashlib
 from hr_assistant.config import Config
 
@@ -12,6 +14,11 @@ class DocumentProcessor:
             return [line.strip() for line, _ in zip(file, range(n_lines))]
 
     @staticmethod
+    def read_document(file_path):
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
+            return file.read()
+
+    @staticmethod
     def get_file_hash(file_path):
         hash_sha256 = hashlib.sha256()
 
@@ -22,12 +29,168 @@ class DocumentProcessor:
         return hash_sha256.hexdigest()
 
     @staticmethod
+    def get_chunking_signature():
+        return (
+            f"{Config.CHUNKING_STRATEGY}|"
+            f"{Config.CHUNK_SIZE}|"
+            f"{Config.CHUNK_OVERLAP}"
+        )
+
+    @staticmethod
+    def extract_candidate_info(text): # cerca nome, email e telefono senza chiamare il modello 
+        lines = [
+            line.strip()
+            for line in text.splitlines()
+            if line.strip()
+        ]
+
+        email_match = re.search(
+            r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+",
+            text,
+        )
+
+        phone_match = re.search(
+            r"(?:\+?\d[\d\s().-]{7,}\d)",
+            text,
+        )
+
+        email = email_match.group(0) if email_match else ""
+
+        phone = ""
+        if phone_match:
+            raw_phone = phone_match.group(0).strip()
+            digits = re.sub(r"\D", "", raw_phone)
+
+            if 8 <= len(digits) <= 15:
+                phone = raw_phone
+
+        candidate_name = ""
+
+        excluded_words = [
+            "curriculum",
+            "cv",
+            "profilo",
+            "telefono",
+            "email",
+            "e-mail",
+            "contatti",
+            "esperienza",
+            "competenze",
+        ]
+
+        for line in lines[:10]:
+            lowered = line.lower()
+
+            if any(word in lowered for word in excluded_words):
+                continue
+
+            if "@" in line:
+                continue
+
+            if re.search(r"\d", line):
+                continue
+
+            if 2 <= len(line.split()) <= 4:
+                candidate_name = line
+                break
+
+        return {
+            "candidate_name": candidate_name,
+            "email": email,
+            "phone": phone,
+        }
+
+    @staticmethod
     def get_document_metadata(file_path):
+        text = DocumentProcessor.read_document(file_path)
+        candidate_info = DocumentProcessor.extract_candidate_info(text)
+
         return {
             "hash": DocumentProcessor.get_file_hash(file_path),
             "last_modified": os.path.getmtime(file_path),
             "source": os.path.basename(file_path),
+            "chunking_signature": DocumentProcessor.get_chunking_signature(),
+            "candidate_name": candidate_info["candidate_name"],
+            "email": candidate_info["email"],
+            "phone": candidate_info["phone"],
         }
+
+    @staticmethod
+    def split_by_section(text):
+        chunks = text.split("### ")
+        return [
+            chunk.strip()
+            for chunk in chunks
+            if chunk.strip()
+        ]
+
+    @staticmethod
+    def split_by_paragraph(text):
+        paragraphs = [
+            paragraph.strip()
+            for paragraph in re.split(r"\n\s*\n", text)
+            if paragraph.strip()
+        ]
+
+        chunks = []
+        current_chunk = ""
+
+        for paragraph in paragraphs:
+            candidate_chunk = (
+                current_chunk + "\n\n" + paragraph
+                if current_chunk
+                else paragraph
+            )
+
+            if len(candidate_chunk) <= Config.CHUNK_SIZE:
+                current_chunk = candidate_chunk
+            else:
+                if current_chunk:
+                    chunks.append(current_chunk)
+
+                current_chunk = paragraph
+
+        if current_chunk:
+            chunks.append(current_chunk)
+
+        return chunks
+
+    @staticmethod
+    def split_by_fixed_size(text):
+        chunks = []
+        start = 0
+
+        while start < len(text):
+            end = start + Config.CHUNK_SIZE
+            chunk = text[start:end].strip()
+
+            if chunk:
+                chunks.append(chunk)
+
+            start = end - Config.CHUNK_OVERLAP
+
+            if start < 0:
+                start = 0
+
+            if start >= len(text):
+                break
+
+        return chunks
+
+    @staticmethod
+    def split_text_into_chunks(text):  # permette di cambiare strategia di chunking dal config.py.
+        strategy = Config.CHUNKING_STRATEGY
+
+        if strategy == "section":
+            return DocumentProcessor.split_by_section(text)
+
+        if strategy == "paragraph":
+            return DocumentProcessor.split_by_paragraph(text)
+
+        if strategy == "fixed":
+            return DocumentProcessor.split_by_fixed_size(text)
+
+        return DocumentProcessor.split_by_section(text)
 
     @staticmethod
     def process_single_document(file_path):
@@ -35,10 +198,9 @@ class DocumentProcessor:
         metadatas = []
         ids = []
 
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
-            content = file.read()
+        content = DocumentProcessor.read_document(file_path)
 
-        chunks = content.replace("\n", ". ").split("### ")
+        chunks = DocumentProcessor.split_text_into_chunks(content)
 
         file_metadata = DocumentProcessor.get_document_metadata(file_path)
         source = file_metadata["source"]
@@ -86,7 +248,11 @@ class DocumentProcessor:
         files_to_update = {
             filename
             for filename in set(current_files.keys()) & set(existing_files.keys())
-            if current_files[filename]["hash"] != existing_files[filename]["hash"]
+            if (
+                current_files[filename]["hash"] != existing_files[filename].get("hash")
+                or current_files[filename]["chunking_signature"]
+                != existing_files[filename].get("chunking_signature")
+            )
         }
 
         indexed_chunks = 0
