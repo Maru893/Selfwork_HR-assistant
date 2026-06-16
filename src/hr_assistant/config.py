@@ -11,9 +11,15 @@ class Config:
     OPENAI_KEY = os.getenv("OPENAI_API_KEY")
 
     # Chunking
-    CHUNKING_STRATEGY = "fixed"
-    CHUNK_SIZE = 800
+    CHUNKING_STRATEGY = "semantic"
+    CHUNK_SIZE = 900
     CHUNK_OVERLAP = 150
+
+
+    # Chunking semantico 
+    SEMANTIC_BREAKPOINT_PERCENTILE = 90
+    SEMANTIC_BUFFER_SIZE = 1
+    SEMANTIC_MIN_CHUNK_SIZE = 250
 
     
 

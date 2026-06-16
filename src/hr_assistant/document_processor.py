@@ -4,6 +4,7 @@ import os
 import re
 import hashlib
 from hr_assistant.config import Config
+from hr_assistant.chunking import ChunkerFactory
 
 
 class DocumentProcessor:
@@ -33,7 +34,10 @@ class DocumentProcessor:
         return (
             f"{Config.CHUNKING_STRATEGY}|"
             f"{Config.CHUNK_SIZE}|"
-            f"{Config.CHUNK_OVERLAP}"
+            f"{Config.CHUNK_OVERLAP}|"
+            f"{Config.SEMANTIC_BREAKPOINT_PERCENTILE}|"
+            f"{Config.SEMANTIC_BUFFER_SIZE}|"
+            f"{Config.SEMANTIC_MIN_CHUNK_SIZE}"
         )
 
     @staticmethod
@@ -116,81 +120,9 @@ class DocumentProcessor:
         }
 
     @staticmethod
-    def split_by_section(text):
-        chunks = text.split("### ")
-        return [
-            chunk.strip()
-            for chunk in chunks
-            if chunk.strip()
-        ]
-
-    @staticmethod
-    def split_by_paragraph(text):
-        paragraphs = [
-            paragraph.strip()
-            for paragraph in re.split(r"\n\s*\n", text)
-            if paragraph.strip()
-        ]
-
-        chunks = []
-        current_chunk = ""
-
-        for paragraph in paragraphs:
-            candidate_chunk = (
-                current_chunk + "\n\n" + paragraph
-                if current_chunk
-                else paragraph
-            )
-
-            if len(candidate_chunk) <= Config.CHUNK_SIZE:
-                current_chunk = candidate_chunk
-            else:
-                if current_chunk:
-                    chunks.append(current_chunk)
-
-                current_chunk = paragraph
-
-        if current_chunk:
-            chunks.append(current_chunk)
-
-        return chunks
-
-    @staticmethod
-    def split_by_fixed_size(text):
-        chunks = []
-        start = 0
-
-        while start < len(text):
-            end = start + Config.CHUNK_SIZE
-            chunk = text[start:end].strip()
-
-            if chunk:
-                chunks.append(chunk)
-
-            start = end - Config.CHUNK_OVERLAP
-
-            if start < 0:
-                start = 0
-
-            if start >= len(text):
-                break
-
-        return chunks
-
-    @staticmethod
-    def split_text_into_chunks(text):  # permette di cambiare strategia di chunking dal config.py.
-        strategy = Config.CHUNKING_STRATEGY
-
-        if strategy == "section":
-            return DocumentProcessor.split_by_section(text)
-
-        if strategy == "paragraph":
-            return DocumentProcessor.split_by_paragraph(text)
-
-        if strategy == "fixed":
-            return DocumentProcessor.split_by_fixed_size(text)
-
-        return DocumentProcessor.split_by_section(text)
+    def split_text_into_chunks(text):
+        chunker = ChunkerFactory.create()
+        return chunker.split(text)
 
     @staticmethod
     def process_single_document(file_path):
