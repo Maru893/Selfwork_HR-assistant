@@ -12,17 +12,12 @@ L'interfaccia è fatta con Chainlit, quindi posso usare il progetto come una pic
 
 L'obiettivo è costruire un assistente che possa rispondere a domande come:
 
-```text
+
 Chi è il candidato migliore per un ruolo da software engineer?
-```
 
-```text
 Cerco una persona con esperienza in cybersecurity.
-```
 
-```text
 Quale candidato ha competenze in automazione dei processi operativi?
-```
 
 Il sistema cerca nei CV indicizzati, recupera il testo più rilevante e poi genera una risposta usando il modello LLM configurato.
 
@@ -45,7 +40,6 @@ Le tecnologie principali sono:
 
 La struttura principale del progetto è questa:
 
-```text
 hr-assistant/
 ├── pyproject.toml
 ├── README.md
@@ -60,7 +54,7 @@ hr-assistant/
         ├── document_processor.py
         ├── chunking.py
         └── utils.py
-```
+
 
 ## Cosa contiene ogni file
 
@@ -816,18 +810,7 @@ Con questo progetto ho lavorato su diversi concetti importanti:
 * streaming delle risposte
 * uso di pulsanti Action in Chainlit
 
-## Possibili miglioramenti futuri
 
-Alcune funzionalità che potrei aggiungere sono:
-
-* ranking dei candidati rispetto a una job description
-* esportazione dei risultati in CSV o JSON
-* gestione di PDF e DOCX oltre ai file `.txt`
-* confronto tra più candidati nella stessa risposta
-* punteggio di compatibilità candidato ruolo
-* dashboard più completa in Chainlit
-* test automatici con pytest
-* deploy del progetto con Docker
 
 ## Riassunto finale
 
