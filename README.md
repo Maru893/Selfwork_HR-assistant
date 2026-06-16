@@ -2,24 +2,15 @@
 
 Questo progetto si chiama `hr-assistant`.
 
-È un assistente HR sviluppato in Python 3.12 con Poetry. Il suo scopo è aiutare a cercare candidati dentro una raccolta di CV in formato `.txt`.
+È un assistente HR sviluppato in Python 3.12 con Poetry. Il suo scopo è aiutare a cercare candidati dentro una raccolta di CV e documenti.
 
-Il progetto usa un approccio RAG, cioè Retrieval Augmented Generation. In parole semplici, prima cerca le parti più utili nei CV e poi usa un modello di linguaggio per generare una risposta più chiara.
+All'inizio il progetto lavorava solo con file `.txt`. Poi è stato migliorato passo dopo passo fino a gestire anche altri formati, come PDF, Word, PowerPoint, Excel, CSV, JSON, XML, HTML e ZIP.
 
-L'interfaccia è fatta con Chainlit, quindi posso usare il progetto come una piccola chat.
+Il progetto usa un approccio RAG, cioè Retrieval Augmented Generation. In parole semplici, prima cerca le parti più utili nei documenti e poi usa un modello di linguaggio per generare una risposta più chiara.
 
-## Obiettivo del progetto
-
-L'obiettivo è costruire un assistente che possa rispondere a domande come:
+L'interfaccia è fatta con Chainlit, quindi posso usare il progetto come una chat.
 
 
-Chi è il candidato migliore per un ruolo da software engineer?
-
-Cerco una persona con esperienza in cybersecurity.
-
-Quale candidato ha competenze in automazione dei processi operativi?
-
-Il sistema cerca nei CV indicizzati, recupera il testo più rilevante e poi genera una risposta usando il modello LLM configurato.
 
 ## Tecnologie usate
 
@@ -35,14 +26,18 @@ Le tecnologie principali sono:
 * LangChain OpenAI, per il chunking semantico
 * Scikit learn, per calcolare la similarità coseno
 * NumPy, per calcolare il percentile nel chunking semantico
+* MarkItDown, per convertire file diversi in testo Markdown
 
 ## Struttura del progetto
 
-La struttura principale del progetto è questa:
-
+```text
 hr-assistant/
 ├── pyproject.toml
+├── poetry.lock
 ├── README.md
+├── .gitignore
+├── .chainlit/
+│   └── config.toml
 ├── resumes/
 ├── data/
 │   └── chromadb/
@@ -54,17 +49,15 @@ hr-assistant/
         ├── document_processor.py
         ├── chunking.py
         └── utils.py
+```
 
-
-## Cosa contiene ogni file
-
-### config.py
+## config.py
 
 Questo file contiene le impostazioni principali del progetto.
 
 Qui vengono configurati:
 
-* la cartella dei CV
+* la cartella dei documenti
 * il nome della collection ChromaDB
 * la cartella di persistenza di ChromaDB
 * il modello embedding
@@ -72,6 +65,8 @@ Qui vengono configurati:
 * il modello LLM
 * l'URL delle API
 * la strategia di chunking
+* i parametri del chunking semantico
+* la versione del processor
 
 Esempio:
 
@@ -80,6 +75,8 @@ class Config:
     DOCUMENTS_DIR = "resumes"
     COLLECTION_NAME = "CVs"
     PERSISTENT_DIR = "data/chromadb"
+
+    PROCESSOR_VERSION = "fase7_multiformat_v1"
 
     MODEL_NAME = "text-embedding-3-small"
     OPENAI_KEY = os.getenv("OPENAI_API_KEY", "IL_TUO_TOKEN_OPENAI")
@@ -97,11 +94,11 @@ class Config:
     AI_API_KEY = "ollama"
 ```
 
-In questo progetto ho separato il modello embedding dal modello LLM.
-
-Il modello embedding serve a trasformare i CV in vettori.
+Il modello embedding serve a trasformare i documenti in vettori.
 
 Il modello LLM serve a generare le risposte nella chat.
+
+La variabile `PROCESSOR_VERSION` serve per indicare che è cambiato il modo di processare i documenti. Se questa versione cambia, il sistema può capire che deve reindicizzare i file.
 
 ## database.py
 
@@ -121,45 +118,16 @@ Questo significa che i dati vengono salvati su disco dentro:
 data/chromadb
 ```
 
-Quindi, quando riavvio il progetto, non devo ricaricare tutti i CV da zero.
+Quindi, quando riavvio il progetto, non devo ricaricare tutti i documenti da zero.
 
 Le funzioni principali sono:
 
-```python
-add_documents()
-```
-
-Aggiunge i chunk dentro ChromaDB.
-
-```python
-query()
-```
-
-Cerca i chunk più simili alla domanda dell'utente.
-
-```python
-get_tracked_files()
-```
-
-Legge i file già indicizzati.
-
-```python
-remove_document_by_source()
-```
-
-Rimuove da ChromaDB tutti i chunk di un file specifico.
-
-```python
-count()
-```
-
-Conta quanti chunk sono presenti nel database.
-
-```python
-reset()
-```
-
-Svuota la collection e la ricrea.
+* `add_documents()`, aggiunge i chunk dentro ChromaDB
+* `query()`, cerca i chunk più simili alla domanda dell'utente
+* `get_tracked_files()`, legge i file già indicizzati
+* `remove_document_by_source()`, rimuove da ChromaDB tutti i chunk di un file specifico
+* `count()`, conta quanti chunk sono presenti nel database
+* `reset()`, svuota la collection e la ricrea
 
 ## document_processor.py
 
@@ -167,17 +135,106 @@ Questo file si occupa dei documenti.
 
 Il suo compito è:
 
-* leggere i file `.txt`
+* controllare quali file sono supportati
+* leggere o convertire i file
 * calcolare l'hash del file
 * estrarre metadata utili
 * dividere il testo in chunk
 * sincronizzare la cartella `resumes` con ChromaDB
 
-La sincronizzazione è una parte importante del progetto.
-
 Prima il progetto caricava i documenti solo se il database era vuoto.
 
-Adesso invece fa un confronto intelligente.
+Adesso invece fa un confronto intelligente tra la cartella `resumes` e quello che è già salvato in ChromaDB.
+
+## Formati supportati, FASE 7
+
+Con la FASE 7 il progetto non lavora più solo con file `.txt`.
+
+I formati supportati sono:
+
+```text
+.txt
+.pdf
+.doc
+.docx
+.ppt
+.pptx
+.xls
+.xlsx
+.html
+.htm
+.csv
+.json
+.xml
+.zip
+```
+
+Nel codice questi formati sono definiti dentro `DocumentProcessor`:
+
+```python
+SUPPORTED_EXTENSIONS = {
+    ".txt": "text",
+    ".pdf": "document",
+    ".doc": "document",
+    ".docx": "document",
+    ".ppt": "presentation",
+    ".pptx": "presentation",
+    ".xls": "spreadsheet",
+    ".xlsx": "spreadsheet",
+    ".html": "web",
+    ".htm": "web",
+    ".csv": "data",
+    ".json": "data",
+    ".xml": "data",
+    ".zip": "archive",
+}
+```
+
+Ogni estensione ha anche un tipo logico, per esempio `document`, `presentation`, `spreadsheet`, `data` o `archive`.
+
+## Conversione dei documenti con MarkItDown
+
+I file come PDF, DOCX, PPTX e XLSX non si possono leggere bene con un semplice `open()`.
+
+Per questo uso MarkItDown.
+
+Il flusso è questo:
+
+```text
+file originale
+conversione con MarkItDown
+testo Markdown
+chunking semantico
+embedding
+salvataggio in ChromaDB
+```
+
+Per i file `.txt`, il progetto legge direttamente il contenuto.
+
+Per gli altri formati, prova a convertirli in Markdown.
+
+Se la conversione fallisce per formati testuali come CSV, JSON, XML o HTML, il sistema prova comunque a leggerli come testo.
+
+## Gestione dei file ZIP
+
+Il progetto supporta anche i file `.zip`.
+
+Quando trova uno ZIP:
+
+1. crea una cartella temporanea
+2. estrae i file interni
+3. controlla quali file interni sono supportati
+4. converte ogni file interno in Markdown
+5. unisce i contenuti
+6. indicizza lo ZIP come un documento unico
+
+Nelle metadata viene salvato anche:
+
+```text
+internal_files_count
+```
+
+Questo valore indica quanti file interni sono stati letti dallo ZIP.
 
 ## Sincronizzazione dei documenti
 
@@ -231,13 +288,13 @@ L'hash è come un'impronta digitale del file.
 
 Se cambio anche una piccola parte del file, l'hash cambia.
 
-Questo permette al sistema di capire quali CV devono essere aggiornati.
+Questo permette al sistema di capire quali documenti devono essere aggiornati.
 
-## Metadata dei candidati
+## Metadata dei documenti
 
-Durante l'indicizzazione, il progetto prova anche a estrarre alcune informazioni dal CV.
+Durante l'indicizzazione, il progetto salva alcune informazioni nelle metadata di ChromaDB.
 
-Le informazioni estratte sono:
+Le metadata principali sono:
 
 * nome del candidato
 * email
@@ -246,12 +303,12 @@ Le informazioni estratte sono:
 * hash del file
 * data di ultima modifica
 * strategia di chunking usata
+* tipo file
+* estensione
+* MIME type
+* numero di file interni se il file è uno ZIP
 
-Queste informazioni vengono salvate nelle metadata di ChromaDB.
-
-Questo è utile perché prima il progetto faceva una chiamata extra al modello solo per estrarre il nome del candidato.
-
-Adesso questa chiamata non serve più.
+Queste informazioni sono utili perché posso mostrarle nelle statistiche e posso usarle nella risposta finale.
 
 ## Eliminazione della doppia chiamata al modello
 
@@ -284,7 +341,7 @@ Questo file contiene tutta la logica del chunking.
 
 Il chunking è la divisione del testo in parti più piccole.
 
-È importante perché un CV intero può essere troppo lungo o poco preciso per una ricerca vettoriale.
+È importante perché un documento intero può essere troppo lungo o poco preciso per una ricerca vettoriale.
 
 Se i chunk sono fatti bene, il sistema recupera informazioni più precise.
 
@@ -300,21 +357,13 @@ Divide il testo usando il separatore:
 ###
 ```
 
-È utile quando i CV sono già ben strutturati.
-
-Esempio:
-
-```text
-### Esperienza
-### Competenze
-### Formazione
-```
+È utile quando i documenti sono già ben strutturati.
 
 ### ParagraphChunker
 
 Divide il testo per paragrafi.
 
-È utile quando il CV è scritto in blocchi separati da righe vuote.
+È utile quando il documento è scritto in blocchi separati da righe vuote.
 
 ### FixedSizeChunker
 
@@ -334,12 +383,12 @@ Il chunking semantico è stato ispirato dal codice visto a lezione.
 
 La logica è questa:
 
-1. Divido il testo in frasi.
-2. Per ogni frase creo una frase combinata con un po' di contesto prima e dopo.
-3. Calcolo gli embedding delle frasi combinate.
-4. Calcolo la distanza semantica tra frasi consecutive.
-5. Trovo i punti in cui la distanza è alta.
-6. Uso quei punti per creare i chunk.
+1. divido il testo in frasi
+2. per ogni frase creo una frase combinata con un po' di contesto prima e dopo
+3. calcolo gli embedding delle frasi combinate
+4. calcolo la distanza semantica tra frasi consecutive
+5. trovo i punti in cui la distanza è alta
+6. uso quei punti per creare i chunk
 
 In pratica, il sistema cerca di capire dove cambia l'argomento.
 
@@ -357,7 +406,7 @@ La terza frase parla di lingue.
 
 Il chunking semantico può decidere di separare questi due argomenti.
 
-## Buffer nel chunking semantico
+## Parametri del chunking semantico
 
 Il parametro:
 
@@ -367,12 +416,6 @@ SEMANTIC_BUFFER_SIZE = 1
 
 significa che ogni frase viene analizzata insieme alla frase precedente e alla frase successiva.
 
-Questo aiuta il modello a capire meglio il contesto.
-
-Se il buffer fosse zero, ogni frase sarebbe analizzata da sola.
-
-## Percentile nel chunking semantico
-
 Il parametro:
 
 ```python
@@ -381,29 +424,9 @@ SEMANTIC_BREAKPOINT_PERCENTILE = 90
 
 serve a decidere quando tagliare.
 
-Il sistema calcola tante distanze tra frasi vicine.
-
-Poi prende solo le distanze più alte.
-
 Se il percentile è alto, il sistema taglia meno.
 
 Se il percentile è basso, il sistema taglia più spesso.
-
-Esempi:
-
-```python
-SEMANTIC_BREAKPOINT_PERCENTILE = 95
-```
-
-Taglia solo quando il cambio di significato è molto forte.
-
-```python
-SEMANTIC_BREAKPOINT_PERCENTILE = 85
-```
-
-Taglia più spesso.
-
-## Dimensione minima dei chunk
 
 Il parametro:
 
@@ -412,8 +435,6 @@ SEMANTIC_MIN_CHUNK_SIZE = 250
 ```
 
 serve a evitare chunk troppo piccoli.
-
-Un chunk troppo piccolo può essere poco utile perché contiene poco contesto.
 
 ## Refactoring del chunking
 
@@ -438,8 +459,6 @@ chunking.py
 si occupa solo del chunking.
 
 Questa separazione rende il progetto più facile da capire e da modificare.
-
-Se in futuro voglio aggiungere una nuova strategia di chunking, posso creare una nuova classe dentro `chunking.py`.
 
 ## ChunkerFactory
 
@@ -491,6 +510,7 @@ Qui vengono gestiti:
 * chiamata al modello LLM
 * streaming della risposta
 * pulsanti Action di Chainlit
+* caricamento documenti dall'interfaccia
 
 ## Azioni Chainlit
 
@@ -500,7 +520,7 @@ I pulsanti sono:
 
 * Sincronizza CV
 * Statistiche indice
-* Carica CV
+* Carica documenti
 * Reset indice
 
 ## Pulsante Sincronizza CV
@@ -513,7 +533,7 @@ DocumentProcessor.process_documents(db)
 
 Serve per aggiornare ChromaDB in base ai file presenti nella cartella `resumes`.
 
-Se aggiungo, modifico o cancello un CV, posso cliccare questo pulsante.
+Se aggiungo, modifico o cancello un documento, posso cliccare questo pulsante.
 
 ## Pulsante Statistiche indice
 
@@ -526,15 +546,17 @@ Mostra:
 * cartella dei documenti
 * strategia di chunking
 * nome, email e telefono dei candidati quando disponibili
+* estensione del file
+* tipo del file
 * hash breve dei file
 
 È utile per controllare se il progetto sta funzionando bene.
 
-## Pulsante Carica CV
+## Pulsante Carica documenti, FASE 8
 
-Questo pulsante permette di caricare un file `.txt` direttamente dall'interfaccia Chainlit.
+Questo pulsante permette di caricare documenti direttamente dall'interfaccia Chainlit.
 
-Il file viene copiato nella cartella:
+I file caricati vengono copiati nella cartella:
 
 ```text
 resumes
@@ -543,6 +565,89 @@ resumes
 Poi parte subito la sincronizzazione.
 
 Così non devo riavviare il progetto.
+
+I formati caricabili sono gli stessi supportati dal backend.
+
+## Upload diretto nella chat
+
+Oltre al pulsante, ho abilitato anche il caricamento diretto nella chat.
+
+Questo significa che posso trascinare un file nel messaggio oppure allegarlo.
+
+Nel codice, Chainlit passa questi file dentro:
+
+```python
+message.elements
+```
+
+Se il messaggio contiene file, il sistema li salva in `resumes`, li sincronizza e poi si ferma.
+
+Uso `return` dopo il caricamento perché non voglio che il sistema interpreti il caricamento come una domanda HR.
+
+## Cartella .files
+
+Durante i test ho visto che Chainlit usa una cartella temporanea chiamata:
+
+```text
+.files
+```
+
+Questa cartella serve per gestire i file caricati.
+
+Se non esiste, Chainlit può dare un errore durante l'upload.
+
+Per evitare il problema, nel codice creo la cartella con:
+
+```python
+os.makedirs(".files", exist_ok=True)
+```
+
+La cartella `.files` non deve essere caricata su GitHub, quindi va messa nel `.gitignore`.
+
+## Configurazione Chainlit per upload diretto
+
+Nel file:
+
+```text
+.chainlit/config.toml
+```
+
+ho abilitato il caricamento spontaneo dei file.
+
+La sezione è simile a questa:
+
+```toml
+[features.spontaneous_file_upload]
+    enabled = true
+    accept = [
+        "text/plain",
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-powerpoint",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "text/html",
+        "text/csv",
+        "application/json",
+        "application/xml",
+        "text/xml",
+        "application/zip"
+    ]
+    max_files = 10
+    max_size_mb = 20
+```
+
+Durante la configurazione ho avuto un errore TOML perché avevo due volte la chiave `accept`.
+
+Il problema era che nel file c'era ancora:
+
+```toml
+accept = ["*/*"]
+```
+
+L'ho eliminata e ho lasciato una sola configurazione `accept`.
 
 ## Pulsante Reset indice
 
@@ -564,17 +669,8 @@ Questo permette di usare sia Ollama locale sia OpenAI cloud con una struttura si
 
 Le funzioni principali sono:
 
-```python
-LLMHelper.chat()
-```
-
-Esegue la chiamata al modello e restituisce lo stream.
-
-```python
-LLMHelper.create_prompt()
-```
-
-Costruisce il prompt finale usando la domanda dell'utente e il contesto recuperato da ChromaDB.
+* `LLMHelper.chat()`, esegue la chiamata al modello e restituisce lo stream
+* `LLMHelper.create_prompt()`, costruisce il prompt finale usando la domanda dell'utente e il contesto recuperato da ChromaDB
 
 La vecchia funzione:
 
@@ -586,13 +682,13 @@ non è più necessaria nel flusso principale, perché il nome viene estratto dur
 
 ## Come funziona il flusso completo
 
-Il flusso del progetto è questo:
+Il flusso del progetto ora è questo:
 
 ```text
-1. Metto i CV in resumes
-2. Avvio Chainlit
-3. Il sistema sincronizza i CV con ChromaDB
-4. Ogni CV viene letto
+1. Metto i documenti in resumes oppure li carico da Chainlit
+2. Il sistema salva i file nella cartella resumes
+3. Il sistema sincronizza resumes con ChromaDB
+4. Ogni documento viene convertito in Markdown se serve
 5. Il testo viene diviso in chunk
 6. I chunk vengono trasformati in embedding
 7. Gli embedding vengono salvati in ChromaDB
@@ -616,6 +712,12 @@ Se servono le dipendenze per il chunking semantico:
 
 ```bash
 poetry add numpy scikit-learn langchain-openai
+```
+
+Per la gestione di file diversi:
+
+```bash
+poetry add "markitdown[all]"
 ```
 
 ## Variabili ambiente
@@ -675,7 +777,7 @@ print(db.get_tracked_files())
 
 ### Test file nuovo
 
-Aggiungo un nuovo file `.txt` in `resumes`.
+Aggiungo un nuovo file supportato in `resumes`.
 
 Poi lancio:
 
@@ -696,12 +798,12 @@ Rilancio subito il test senza modificare nulla.
 Mi aspetto:
 
 ```text
-unchanged: numero_totale_cv
+unchanged: numero_totale_documenti
 ```
 
 ### Test file modificato
 
-Modifico un CV.
+Modifico un documento.
 
 Poi rilancio il test.
 
@@ -713,7 +815,7 @@ updated: 1
 
 ### Test file eliminato
 
-Cancello un CV dalla cartella `resumes`.
+Cancello un documento dalla cartella `resumes`.
 
 Poi rilancio il test.
 
@@ -721,6 +823,45 @@ Mi aspetto:
 
 ```text
 removed: 1
+```
+
+### Test upload da Chainlit
+
+Avvio Chainlit:
+
+```bash
+poetry run chainlit run src/hr_assistant/__init__.py -w
+```
+
+Poi clicco “Carica documenti” e provo a caricare:
+
+```text
+.txt
+.pdf
+.csv
+.json
+.docx
+.zip
+```
+
+Dopo il caricamento controllo il report e poi clicco “Statistiche indice”.
+
+### Test RAG dopo upload
+
+Dopo aver caricato un documento, faccio una domanda legata al suo contenuto.
+
+Esempi:
+
+```text
+Chi ha competenze in Power BI?
+```
+
+```text
+Chi ha esperienza in pianificazione e budget?
+```
+
+```text
+Quale documento parla di cybersecurity?
 ```
 
 ## Come provare il chunking
@@ -751,7 +892,7 @@ CHUNKING_STRATEGY = "semantic"
 
 Quando cambio strategia, la `chunking_signature` cambia.
 
-Quindi il sistema capisce che deve reindicizzare i CV.
+Quindi il sistema capisce che deve reindicizzare i documenti.
 
 ## Domande utili per testare il RAG
 
@@ -777,21 +918,14 @@ Quale candidato è più adatto per un ruolo ibrido tra operations e automazione?
 Chi ha esperienza nella gestione di team?
 ```
 
-## File ignorati da Git
-
-Nel `.gitignore` ho escluso:
-
 ```text
-.env
-.vscode
-data/
+Chi ha competenze in Power BI?
 ```
 
-Questo serve perché:
+```text
+Quale documento parla di pianificazione e budget?
+```
 
-* `.env` contiene dati sensibili
-* `.vscode` contiene configurazioni locali
-* `data/` contiene il database ChromaDB, che può diventare pesante
 
 ## Cosa ho imparato
 
@@ -809,6 +943,10 @@ Con questo progetto ho lavorato su diversi concetti importanti:
 * refactoring del codice
 * streaming delle risposte
 * uso di pulsanti Action in Chainlit
+* gestione di formati diversi con MarkItDown
+* caricamento documenti dall'interfaccia
+* configurazione di upload file in Chainlit
+* gestione di file temporanei con `.files`
 
 
 
@@ -826,6 +964,10 @@ Dopo ho inserito i pulsanti Chainlit per gestire il progetto dalla UI.
 
 Poi ho eliminato una chiamata inutile al modello, salvando nome, email e telefono nelle metadata.
 
-Infine ho aggiunto il chunking semantico e ho fatto un refactoring per separare meglio il codice.
+Poi ho aggiunto il chunking semantico e ho fatto un refactoring per separare meglio il codice.
+
+Con la FASE 7 ho aggiunto la gestione di file diversi usando MarkItDown.
+
+Con la FASE 8 ho aggiunto il caricamento dei documenti direttamente da Chainlit.
 
 Adesso il progetto è più ordinato, più efficiente e più facile da spiegare.
