@@ -66,9 +66,12 @@ def format_index_stats():
             candidate_name = metadata.get("candidate_name") or "nome non rilevato"
             email = metadata.get("email") or "email non rilevata"
             phone = metadata.get("phone") or "telefono non rilevato"
+            extension = metadata.get("extension") or "estensione n.d."
+            file_type = metadata.get("file_type") or "tipo n.d."
 
             lines.append(
-                f"• {filename}, {candidate_name}, {email}, {phone}, hash {short_hash}"
+                f"• {filename}, {file_type}, {extension}, "
+                f"{candidate_name}, {email}, {phone}, hash {short_hash}"
             )
 
     return "\n".join(lines)
@@ -92,10 +95,10 @@ def get_document_actions():
         ),
         cl.Action(
             name="upload_resume",
-            label="Carica CV",
+            label="Carica file",
             icon="upload",
             payload={"value": "upload"},
-            tooltip="Carica uno o più CV in formato txt",
+            tooltip="Carica CV o documenti nei formati supportati"
         ),
         cl.Action(
             name="reset_index",
@@ -174,8 +177,22 @@ async def on_show_index_stats(action: cl.Action):
 @cl.action_callback("upload_resume")
 async def on_upload_resume(action: cl.Action):
     files = await cl.AskFileMessage(
-        content="Carica uno o più CV in formato .txt.",
-        accept={"text/plain": [".txt"]},
+        content="Carica uno o più CV o documenti nei formati supportati.",
+        accept={
+            "text/plain": [".txt"],
+            "application/pdf": [".pdf"],
+            "application/msword": [".doc"],
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+            "application/vnd.ms-powerpoint": [".ppt"],
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"],
+            "application/vnd.ms-excel": [".xls"],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+            "text/html": [".html", ".htm"],
+            "text/csv": [".csv"],
+            "application/json": [".json"],
+            "application/xml": [".xml"],
+            "application/zip": [".zip"],
+        },
         max_files=10,
         max_size_mb=5,
         timeout=180,

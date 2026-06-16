@@ -5,6 +5,8 @@ class Config:
     DOCUMENTS_DIR = "resumes"
     COLLECTION_NAME = "CVs"
     PERSISTENT_DIR = "data/chromadb" 
+
+    PROCESSOR_VERSION = "fase7_multiformat_v1"
     
     # Embedding (OpenAI)
     MODEL_NAME = "text-embedding-3-small"

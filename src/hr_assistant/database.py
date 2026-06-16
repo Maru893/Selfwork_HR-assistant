@@ -45,11 +45,15 @@ class Database:
                     "hash": metadata.get("hash"),
                     "last_modified": metadata.get("last_modified"),
                     "source": source,
+                    "file_type": metadata.get("file_type"),
+                    "mime_type": metadata.get("mime_type"),
+                    "extension": metadata.get("extension"),
+                    "internal_files_count": metadata.get("internal_files_count"),
                     "chunking_signature": metadata.get("chunking_signature"),
                     "candidate_name": metadata.get("candidate_name"),
                     "email": metadata.get("email"),
                     "phone": metadata.get("phone"),
-            }
+                }
 
         return tracked_files
 
