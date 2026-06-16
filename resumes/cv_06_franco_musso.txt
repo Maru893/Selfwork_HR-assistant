@@ -1,0 +1,11 @@
+Franco Musso
+
+Python developer con esperienza in FastAPI, SQL e Docker.
+
+### Esperienza
+
+Ha lavorato per 3 anni su applicazioni backend.
+
+### Competenze
+
+Python, FastAPI, PostgreSQL, Docker.

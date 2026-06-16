@@ -1,9 +1,9 @@
 import os
 import chainlit as cl
-from document_processor import DocumentProcessor
-from database import Database
-from config import Config
-from utils import LLMHelper
+from hr_assistant.document_processor import DocumentProcessor
+from hr_assistant.database import Database
+from hr_assistant.config import Config
+from hr_assistant.utils import LLMHelper
 
 # Inizializza il database persistente
 db = Database()

@@ -1,5 +1,5 @@
 # utils.py
-from config import Config
+from hr_assistant.config import Config
 from openai import AsyncOpenAI
 
 client = AsyncOpenAI(base_url=Config.AI_API_URL, api_key=Config.AI_API_KEY)
