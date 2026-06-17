@@ -1,14 +1,13 @@
-# Welcome to Chainlit! 🚀🤖
+# HR Assistant
 
-Hi there, Developer! 👋 We're excited to have you on board. Chainlit is a powerful tool designed to help you prototype, debug and share applications built on top of LLMs.
+Benvenuto in **HR Assistant**.
 
-## Useful Links 🔗
+Questo assistente aiuta a cercare candidati e informazioni dentro CV e documenti indicizzati.
 
-- **Documentation:** Get started with our comprehensive [Chainlit Documentation](https://docs.chainlit.io) 📚
-- **Discord Community:** Join our friendly [Chainlit Discord](https://discord.gg/k73SQ3FyUh) to ask questions, share your projects, and connect with other developers! 💬
+Puoi anche caricare nuovi documenti dall'interfaccia usando il pulsante **Carica documenti**.
 
-We can't wait to see what you create with Chainlit! Happy coding! 💻😊
+I formati supportati includono:
 
-## Welcome screen
+`.txt`, `.pdf`, `.doc`, `.docx`, `.csv`, `.json`, `.xlsx`, `.pptx`, `.html`, `.xml` e `.zip`.
 
-To modify the welcome screen, edit the `chainlit.md` file at the root of your project. If you do not want a welcome screen, just leave this file empty.
+Il sistema usa un approccio RAG: prima cerca le parti più rilevanti nei documenti, poi genera una risposta chiara usando il modello LLM configurato.

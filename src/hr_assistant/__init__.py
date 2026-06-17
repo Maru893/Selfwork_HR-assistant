@@ -161,6 +161,7 @@ def get_document_actions():
 async def send_document_actions():
     await cl.Message(
         content="Gestione documenti",
+        author="HR Assistant",
         actions=get_document_actions(),
     ).send()
 
@@ -196,6 +197,7 @@ async def start():
 
     await cl.Message(
         content=content,
+        author="HR Assistant",
         actions=get_document_actions(),
     ).send()
 
@@ -211,6 +213,7 @@ async def on_sync_documents(action: cl.Action):
 
     await cl.Message(
         content=format_sync_report(report),
+        author="HR Assistant",
     ).send()
 
     await send_document_actions()
@@ -220,12 +223,14 @@ async def on_sync_documents(action: cl.Action):
 async def on_show_index_stats(action: cl.Action):
     await cl.Message(
         content=format_index_stats(),
+        author="HR Assistant",
     ).send()
 
 @cl.action_callback("upload_documents")
 async def on_upload_documents(action: cl.Action):
     files = await cl.AskFileMessage(
         content="Carica uno o più documenti supportati.",
+        author="HR Assistant",
         accept=ACCEPTED_UPLOAD_TYPES,
         max_files=10,
         max_size_mb=20,
@@ -235,7 +240,8 @@ async def on_upload_documents(action: cl.Action):
 
     if not files:
         await cl.Message(
-            content="Nessun file caricato."
+            content="Nessun file caricato.",
+            author="HR Assistant",
         ).send()
         await send_document_actions()
         return
@@ -244,7 +250,7 @@ async def on_upload_documents(action: cl.Action):
 
     if not saved_files:
         await cl.Message(
-            content="Nessun file supportato caricato."
+            content="Nessun file supportato caricato.",
         ).send()
         await send_document_actions()
         return
@@ -260,7 +266,8 @@ async def on_upload_documents(action: cl.Action):
             + "\n".join(f"• {file_name}" for file_name in saved_files)
             + "\n\n"
             + format_sync_report(report)
-        )
+        ),
+        author="HR Assistant",
     ).send()
 
     await send_document_actions()
@@ -269,6 +276,7 @@ async def on_upload_documents(action: cl.Action):
 async def on_reset_index(action: cl.Action):
     response = await cl.AskActionMessage(
         content="Vuoi davvero svuotare l'indice dei CV?",
+        author="HR Assistant",
         actions=[
             cl.Action(
                 name="confirm_reset_index",
@@ -289,14 +297,16 @@ async def on_reset_index(action: cl.Action):
 
     if not response:
         await cl.Message(
-            content="Reset annullato."
+            content="Reset annullato.",
+            author="HR Assistant",
         ).send()
         await send_document_actions()
         return
 
     if response.get("payload", {}).get("value") != "confirm":
         await cl.Message(
-            content="Reset annullato."
+            content="Reset annullato.",
+            author="HR Assistant",
         ).send()
         await send_document_actions()
         return
@@ -309,7 +319,9 @@ async def on_reset_index(action: cl.Action):
             f"Chunk totali in ChromaDB: {db.count()}\n\n"
             "I file nella cartella resumes non sono stati eliminati. "
             "Clicca su Sincronizza CV per reindicizzarli."
-        )
+        ),
+        author="HR Assistant",
+
     ).send()
 
     await send_document_actions()   
@@ -319,7 +331,8 @@ async def on_reset_index(action: cl.Action):
 async def handle_message(message: cl.Message):
     if message.elements:
         await cl.Message(
-            content="Caricamento e indicizzazione documenti..."
+            content="Caricamento e indicizzazione documenti...",
+            author="HR Assistant",
         ).send()
 
         supported_files = [
@@ -348,7 +361,8 @@ async def handle_message(message: cl.Message):
                 + "\n".join(f"• {file_name}" for file_name in saved_files)
                 + "\n\n"
                 + format_sync_report(report)
-            )
+            ),
+            author="HR Assistant",
         ).send()
 
         await send_document_actions()
@@ -394,7 +408,7 @@ async def handle_message(message: cl.Message):
         }
     )
 
-    response_message = cl.Message(content="")
+    response_message = cl.Message(content="",author="HR Assistant",)
     await response_message.send()
 
     try:
