@@ -23,7 +23,6 @@ Le tecnologie principali sono:
 * OpenAI embeddings, per trasformare i testi in vettori
 * Ollama, per usare un modello locale come Llama 3.2
 * OpenAI, come alternativa cloud per il completamento
-* LangChain OpenAI, per il chunking semantico
 * Scikit learn, per calcolare la similarità coseno
 * NumPy, per calcolare il percentile nel chunking semantico
 * MarkItDown, per convertire file diversi in testo Markdown
