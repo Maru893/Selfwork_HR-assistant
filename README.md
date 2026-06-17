@@ -792,6 +792,58 @@ OPENAI_API_KEY="la_tua_chiave_openai"
 
 Il file `.env` non deve essere caricato su GitHub.
 
+### Errore di versioni Python o librerie
+
+Se durante l'installazione compare un errore legato alla versione di Python o alla compatibilità delle librerie, controllo il file:
+
+```text
+pyproject.toml
+```
+
+Nella sezione `[project]` posso trovare una riga simile a questa:
+
+```toml
+requires-python = ">=3.12,<4.0.0"
+```
+
+Questa riga indica quali versioni di Python sono compatibili con il progetto.
+
+Se sto usando Python 3.13, posso impostare:
+
+```toml
+requires-python = ">=3.13,<4.0.0"
+```
+
+Se invece sto usando Python 3.12, devo lasciare:
+
+```toml
+requires-python = ">=3.12,<4.0.0"
+```
+
+Dopo la modifica, posso controllare quale versione di Python usa Poetry con:
+
+```bash
+poetry env info
+```
+
+Se voglio forzare Poetry a usare Python 3.13, posso eseguire:
+
+```bash
+poetry env use python3.13
+```
+
+Se voglio forzare Poetry a usare Python 3.12, posso eseguire:
+
+```bash
+poetry env use python3.12
+```
+
+Poi reinstallo le dipendenze:
+
+```bash
+poetry install
+```
+
 ### Ambiente virtuale con Poetry
 
 Poetry crea e gestisce automaticamente un ambiente virtuale.
@@ -842,7 +894,6 @@ Dopo l'avvio, Chainlit apre l'app su:
 http://localhost:8000
 ```
 
-###
 
 
 ## Test della sincronizzazione
