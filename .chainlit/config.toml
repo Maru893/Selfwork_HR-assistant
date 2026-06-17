@@ -100,56 +100,46 @@ reaction_on_message_received = false
     allowed_executables = [ "npx", "uvx" ]
 
 [UI]
-# Name of the assistant.
+# Nome mostrato nell'interfaccia.
 name = "HR Assistant"
 
-# Theme iniziale dell'app.
+# Tema iniziale.
 default_theme = "light"
 
-# Lingua forzata dell'interfaccia.
-# Se vuoi lasciare la lingua del browser, puoi commentare questa riga.
+# Lingua dell'interfaccia.
 language = "it-IT"
 
-# Layout normale.
-# Puoi mettere "wide" se vuoi una chat più larga.
-# layout = "wide"
-
-# Stato iniziale della sidebar.
+# Sidebar visibile all'avvio.
 default_sidebar_state = "open"
 
 # Chiede conferma quando clicchi New Chat.
 confirm_new_chat = true
 
-# Description of the assistant. This is used for HTML tags.
-description = "Assistente HR per cercare candidati e analizzare CV con RAG."
+# Descrizione usata anche nei meta tag.
+description = "Assistente HR per analizzare CV e documenti con ricerca RAG."
 
-# Chain of Thought display mode.
-# In produzione è meglio hidden.
+# Nasconde i dettagli interni per una UI più pulita.
 cot = "hidden"
 
-# CSS custom.
+# CSS personalizzato.
 custom_css = "/public/app.css"
 
-# The style of alert boxes. Can be "classic" or "modern".
+# Alert più moderni.
 alert_style = "modern"
 
-# Logo principale dell'assistente.
+# Niente logo grande nella homepage.
 logo_file_url = ""
 
-# Avatar dell'assistente nei messaggi.
+# Avatar piccolo dell'assistente nei messaggi.
 default_avatar_file_url = "/public/avatars/system_assistant.png"
 
-# Immagine usata nei meta tag.
+# Immagine usata per meta preview.
 custom_meta_image_url = "/public/avatars/hr_assistant.png"
 
-# Avatar size in pixels.
+# Dimensione avatar.
 avatar_size = 28
 
-# Custom login page image.
-# Se non hai un'immagine di background, lascia commentato.
-# login_page_image = "/public/custom-background.jpg"
-
-# Custom meta URL.
+# Link opzionale GitHub.
 # custom_meta_url = "https://github.com/tuo-username/hr-assistant"
 
 [meta]

@@ -699,47 +699,151 @@ Il flusso del progetto ora è questo:
 13. Chainlit mostra la risposta in streaming
 ```
 
-## Installazione
+## Creazione e installazione del progetto con Poetry
 
-Per installare il progetto:
+Questa sezione spiega come creare e avviare il progetto usando Poetry.
+
+Poetry serve a gestire:
+
+* la struttura del progetto Python
+* le dipendenze
+* il file `pyproject.toml`
+* l'ambiente virtuale
+
+### Creare un nuovo progetto con Poetry
+
+Per creare un progetto da zero:
+
+```bash
+poetry new nome_progetto
+cd nome_progetto
+```
+
+Nel caso di questo progetto, il nome è:
+
+```bash
+hr-assistant
+```
+
+Quindi la cartella del progetto è:
+
+```bash
+cd hr-assistant
+```
+
+### Installare le dipendenze del progetto
+
+Se il progetto esiste già e contiene il file `pyproject.toml`, basta lanciare:
 
 ```bash
 poetry install
 ```
 
-Se servono le dipendenze per il chunking semantico:
+Questo comando legge il file `pyproject.toml` e installa tutte le dipendenze necessarie.
+
+### Aggiungere le dipendenze principali
+
+Per aggiungere le librerie principali usate nel progetto:
 
 ```bash
-poetry add numpy scikit-learn langchain-openai
+poetry add chromadb openai chainlit numpy scikit-learn langchain-openai
 ```
 
-Per la gestione di file diversi:
+Queste dipendenze servono per:
+
+* `chromadb`, database vettoriale
+* `openai`, embeddings e chiamate API compatibili
+* `chainlit`, interfaccia chat
+* `numpy`, calcoli numerici
+* `scikit-learn`, similarità coseno
+* `langchain-openai`, supporto agli embeddings nel chunking semantico
+
+### Aggiungere il supporto per file diversi
+
+Per leggere e convertire formati come PDF, Word, PowerPoint, Excel, CSV, JSON, XML e ZIP, uso MarkItDown.
+
+Installazione base:
+
+```bash
+poetry add markitdown
+```
+
+Oppure, se voglio installare anche le dipendenze opzionali:
 
 ```bash
 poetry add "markitdown[all]"
 ```
 
-## Variabili ambiente
+### Configurare la chiave OpenAI
 
-Serve una chiave OpenAI per gli embedding.
+Il progetto usa gli embeddings OpenAI, quindi serve una chiave API.
 
-Creo un file `.env` oppure imposto la variabile ambiente:
+Creo un file `.env` nella root del progetto:
 
 ```bash
-export OPENAI_API_KEY="la_tua_chiave"
+touch .env
+```
+
+Dentro `.env` inserisco:
+
+```text
+OPENAI_API_KEY="la_tua_chiave_openai"
 ```
 
 Il file `.env` non deve essere caricato su GitHub.
 
-## Avvio con Chainlit
+### Ambiente virtuale con Poetry
 
-Per avviare il progetto:
+Poetry crea e gestisce automaticamente un ambiente virtuale.
+
+Nella maggior parte dei casi non serve attivarlo manualmente, perché posso eseguire i comandi con:
+
+```bash
+poetry run comando
+```
+
+Esempio:
+
+```bash
+poetry run python test_sync.py
+```
+
+Se invece voglio attivare manualmente l'ambiente virtuale, posso usare:
+
+```bash
+eval $(poetry env activate)
+```
+
+Dopo l'attivazione posso usare direttamente:
+
+```bash
+python test_sync.py
+```
+
+Per vedere il percorso dell'ambiente virtuale:
+
+```bash
+poetry env info --path
+```
+
+### Avviare il progetto con Chainlit
+
+Per avviare l'interfaccia chat:
 
 ```bash
 poetry run chainlit run src/hr_assistant/__init__.py -w
 ```
 
-Il parametro `-w` serve per ricaricare l'app quando modifico il codice.
+Il parametro `-w` serve per ricaricare automaticamente l'app quando modifico il codice.
+
+Dopo l'avvio, Chainlit apre l'app su:
+
+```text
+http://localhost:8000
+```
+
+###
+
 
 ## Test della sincronizzazione
 
@@ -926,6 +1030,119 @@ Quale documento parla di pianificazione e budget?
 ```
 
 
+## Personalizzazione grafica, FASE finale
+
+Nella fase finale ho personalizzato l'interfaccia grafica di Chainlit.
+
+L'obiettivo non era solo copiare il tema visto a lezione, ma dare al progetto un'identità più personale e più professionale.
+
+La personalizzazione riguarda:
+
+* nome dell'app
+* tema chiaro e tema scuro
+* colori principali
+* stile dell'input della chat
+* stile dei pulsanti
+* logo o immagine principale
+* avatar dell'assistente
+* pagina iniziale `chainlit.md`
+* file statici dentro la cartella `public`
+
+## File usati per la personalizzazione grafica
+
+I file principali sono:
+
+```text
+.chainlit/config.toml
+public/app.css
+public/theme.json
+public/avatars/
+chainlit.md
+```
+
+Nel file `.chainlit/config.toml` configuro la parte UI di Chainlit.
+
+Esempio:
+
+```toml
+[UI]
+name = "HR Assistant"
+default_theme = "light"
+language = "it-IT"
+description = "Assistente HR per cercare candidati e analizzare CV con RAG."
+cot = "hidden"
+custom_css = "/public/app.css"
+alert_style = "modern"
+default_avatar_file_url = "/public/avatars/system_assistant.png"
+custom_meta_image_url = "/public/avatars/hr_assistant.png"
+```
+
+Ho lasciato `cot = "hidden"` perché nella versione finale l'interfaccia deve essere più pulita e adatta a un utilizzo normale.
+
+## Scelta dello stile grafico
+
+Per la versione finale voglio usare uno stile più professionale rispetto al tema di partenza.
+
+La direzione scelta è:
+
+```text
+professionale
+pulita
+moderna
+leggibile
+adatta a un progetto HR e RAG
+```
+
+I colori principali sono:
+
+* blu scuro, per dare un'idea aziendale e professionale
+* verde acqua, per dare un tocco moderno e tecnologico
+* grigio chiaro, per mantenere l'interfaccia leggibile
+* sfondo scuro bilanciato nella modalità dark
+
+Il file `theme.json` contiene le variabili del tema.
+
+Il file `app.css` contiene alcune regole CSS per migliorare l'aspetto dell'interfaccia, per esempio:
+
+* input più arrotondato
+* sfondo più morbido
+* messaggi più leggibili
+* pulsanti più moderni
+* bordi più coerenti
+
+## Pagina iniziale Chainlit
+
+Il file `chainlit.md` contiene il testo mostrato nella sezione “Leggimi”.
+
+La pagina iniziale spiega:
+
+* cos'è HR Assistant
+* cosa può fare l'utente
+* quali formati sono supportati
+* come funziona il sistema RAG in modo semplice
+
+## Test della personalizzazione grafica
+
+Per testare la grafica avvio Chainlit:
+
+```bash
+poetry run chainlit run src/hr_assistant/__init__.py -w
+```
+
+Poi controllo:
+
+* tema chiaro
+* tema scuro
+* pulsanti
+* input della chat
+* pagina “Leggimi”
+* caricamento documenti
+* avatar dell'assistente
+* leggibilità delle risposte
+
+
+
+
 ## Cosa ho imparato
 
 Con questo progetto ho lavorato su diversi concetti importanti:
@@ -946,6 +1163,10 @@ Con questo progetto ho lavorato su diversi concetti importanti:
 * caricamento documenti dall'interfaccia
 * configurazione di upload file in Chainlit
 * gestione di file temporanei con `.files`
+* personalizzazione grafica di Chainlit
+* uso di `theme.json`
+* uso di CSS custom con `public/app.css`
+* gestione di logo, avatar e pagina iniziale
 
 
 
@@ -969,4 +1190,4 @@ Con la FASE 7 ho aggiunto la gestione di file diversi usando MarkItDown.
 
 Con la FASE 8 ho aggiunto il caricamento dei documenti direttamente da Chainlit.
 
-Adesso il progetto è più ordinato, più efficiente e più facile da spiegare.
+Nella fase finale ho personalizzato l'interfaccia grafica di Chainlit con un tema più professionale, colori più coerenti, CSS custom, avatar e una pagina iniziale dedicata.

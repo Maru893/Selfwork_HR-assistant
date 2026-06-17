@@ -1,24 +1,49 @@
-/* HR Assistant custom style */
+/* HR Assistant professional custom style */
 
+/* Base */
 body {
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-/* Sfondo generale */
+/* Sfondo generale, leggero e professionale */
 main {
   background:
-    radial-gradient(circle at top left, rgba(20, 184, 166, 0.12), transparent 32%),
-    radial-gradient(circle at bottom right, rgba(30, 64, 175, 0.10), transparent 30%);
+    radial-gradient(circle at top left, rgba(20, 184, 166, 0.08), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(30, 64, 175, 0.08), transparent 30%);
 }
 
-/* Messaggi */
+/* Migliora leggibilità dei messaggi */
 .message-content {
-  line-height: 1.65;
+  line-height: 1.7;
+  letter-spacing: 0.01em;
 }
 
-/* Input chat */
+/* Titoli nei messaggi */
+.message-content h1,
+.message-content h2,
+.message-content h3 {
+  color: hsl(var(--primary));
+  font-weight: 750;
+}
+
+/* Link più chiari */
+.message-content a,
+a {
+  font-weight: 600;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+/* Input chat più elegante */
 #chat-input {
-  border-radius: 18px !important;
+  border-radius: 16px !important;
+  border: 1px solid hsl(var(--border)) !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#chat-input:focus-within {
+  border-color: hsl(var(--ring)) !important;
+  box-shadow: 0 0 0 3px hsla(174, 72%, 38%, 0.16) !important;
 }
 
 /* Placeholder input */
@@ -26,43 +51,58 @@ main {
   color: #64748b !important;
 }
 
-/* Pulsanti */
+/* Pulsanti più professionali */
 button {
-  border-radius: 12px !important;
-}
-
-/* Link */
-a {
+  border-radius: 10px !important;
   font-weight: 600;
-}
-
-/* Titoli markdown */
-.message-content h1,
-.message-content h2,
-.message-content h3 {
-  color: hsl(var(--primary));
-  font-weight: 700;
-}
-
-/* Codice */
-.message-content code {
-  border-radius: 6px;
-  padding: 2px 6px;
-}
-
-/* Blocchi codice */
-.message-content pre {
-  border-radius: 14px;
 }
 
 /* Card e pannelli */
 .rounded-lg,
 .rounded-md,
 .rounded-xl {
-  border-radius: 16px !important;
+  border-radius: 14px !important;
+}
+
+/* Codice inline */
+.message-content code {
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 0.92em;
+}
+
+/* Blocchi codice */
+.message-content pre {
+  border-radius: 14px;
+  border: 1px solid hsl(var(--border));
+}
+
+/* Tabelle markdown */
+.message-content table {
+  border-collapse: collapse;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.message-content th,
+.message-content td {
+  border: 1px solid hsl(var(--border));
+  padding: 8px 10px;
 }
 
 /* Immagini logo/avatar */
 img {
   object-fit: contain;
+}
+
+/* Piccola rifinitura per dark mode */
+.dark main {
+  background:
+    radial-gradient(circle at top left, rgba(20, 184, 166, 0.10), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.08), transparent 30%);
+}
+
+.dark #chat-input:focus-within {
+  box-shadow: 0 0 0 3px hsla(174, 72%, 42%, 0.18) !important;
 }
